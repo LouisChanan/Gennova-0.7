@@ -16,13 +16,22 @@ export const LinkKitFlow: React.FC<LinkKitFlowProps> = ({ onClose, onComplete })
     const [scanMode, setScanMode] = useState<'camera' | 'manual'>('camera');
     const [cameraError, setCameraError] = useState<string | null>(null);
 
-    // Form State
+    // Form State - all stored locally until final submit
     const [profileName, setProfileName] = useState('');
     const [dob, setDob] = useState('');
     const [kitId, setKitId] = useState('');
     const [gender, setGender] = useState<'Male' | 'Female' | 'Other' | null>(null);
     const [height, setHeight] = useState('');
     const [weight, setWeight] = useState('');
+
+    // Go back to previous step or close
+    const handleBack = () => {
+        if (step === 'register') {
+            setStep('scan');
+        } else {
+            onClose();
+        }
+    };
 
     const handleScan = (result: { rawValue: string }[]) => {
         if (result && result.length > 0) {
@@ -38,8 +47,13 @@ export const LinkKitFlow: React.FC<LinkKitFlowProps> = ({ onClose, onComplete })
         }
     };
 
-    const handleRegisterSubmit = async () => {
+    // Only save to database on final confirmation
+    const handleFinalSubmit = async () => {
         if (!user) return;
+        if (!kitId.trim()) {
+            alert('Kit ID is required');
+            return;
+        }
         setLoading(true);
 
         try {
@@ -59,11 +73,11 @@ export const LinkKitFlow: React.FC<LinkKitFlowProps> = ({ onClose, onComplete })
 
             if (profileError) throw profileError;
 
-            // 2. Insert Kit
+            // 2. Insert Kit (linked to the profile)
             const { error: kitError } = await supabase
                 .from('dna_test_kits')
                 .insert({
-                    kit_id: kitId || `GK-${Math.floor(1000 + Math.random() * 9000)}`,
+                    kit_id: kitId,
                     profile_id: profileData.id,
                     status: 'activated',
                     activated_at: new Date().toISOString()
@@ -113,19 +127,21 @@ export const LinkKitFlow: React.FC<LinkKitFlowProps> = ({ onClose, onComplete })
                 </div>
             )}
 
-            {/* --- STEP 1: SCAN --- */}
+            {/* --- STEP 1: SCAN (Register Kit) --- */}
             {step === 'scan' && (
                 <div className="min-h-screen flex flex-col relative">
-                    {/* Header */}
+                    {/* Header with Back and Cancel */}
                     <div className="px-6 py-4 flex items-center justify-between relative z-10">
                         <button onClick={onClose} className="w-10 h-10 -ml-2 rounded-full flex items-center justify-center hover:bg-gray-100 transition-colors bg-white shadow-sm border border-gray-100">
                             <ArrowLeft size={24} className="text-slate-800" />
                         </button>
                         <div className="text-center">
-                            <span className="text-[10px] text-teal-600 font-bold uppercase tracking-widest">Gennova ID</span>
-                            <h1 className="text-lg font-bold text-slate-900">Link Kit</h1>
+                            <span className="text-[10px] text-teal-600 font-bold uppercase tracking-widest">Step 1 of 2</span>
+                            <h1 className="text-lg font-bold text-slate-900">Register Kit</h1>
                         </div>
-                        <div className="w-8"></div>
+                        <button onClick={onClose} className="w-10 h-10 -mr-2 rounded-full flex items-center justify-center hover:bg-gray-100 transition-colors">
+                            <X size={20} className="text-gray-400" />
+                        </button>
                     </div>
 
                     {/* Stepper */}
@@ -135,15 +151,15 @@ export const LinkKitFlow: React.FC<LinkKitFlowProps> = ({ onClose, onComplete })
 
                             <div className="flex flex-col items-center">
                                 <div className="w-3 h-3 rounded-full bg-teal-500 ring-4 ring-white"></div>
-                                <span className="text-[9px] font-bold text-teal-600 mt-2 uppercase tracking-wide">Scan</span>
+                                <span className="text-[9px] font-bold text-teal-600 mt-2 uppercase tracking-wide">Kit</span>
                             </div>
                             <div className="flex flex-col items-center opacity-30">
                                 <div className="w-2 h-2 rounded-full bg-gray-300 ring-4 ring-white"></div>
-                                <span className="text-[9px] font-bold text-gray-400 mt-2 uppercase tracking-wide">Register</span>
+                                <span className="text-[9px] font-bold text-gray-400 mt-2 uppercase tracking-wide">Profile</span>
                             </div>
                             <div className="flex flex-col items-center opacity-30">
                                 <div className="w-2 h-2 rounded-full bg-gray-300 ring-4 ring-white"></div>
-                                <span className="text-[9px] font-bold text-gray-400 mt-2 uppercase tracking-wide">Thank You</span>
+                                <span className="text-[9px] font-bold text-gray-400 mt-2 uppercase tracking-wide">Done</span>
                             </div>
                         </div>
                     </div>
@@ -223,7 +239,7 @@ export const LinkKitFlow: React.FC<LinkKitFlowProps> = ({ onClose, onComplete })
                                     disabled={!kitId.trim()}
                                     className="w-full bg-teal-500 hover:bg-teal-600 disabled:bg-gray-200 disabled:text-gray-400 text-white font-bold py-4 rounded-2xl shadow-lg shadow-teal-200 transition-all flex items-center justify-center space-x-2"
                                 >
-                                    <span>Continue</span>
+                                    <span>Continue to Profile</span>
                                     <ChevronRight size={18} />
                                 </button>
                             </div>
@@ -242,54 +258,64 @@ export const LinkKitFlow: React.FC<LinkKitFlowProps> = ({ onClose, onComplete })
                 </div>
             )}
 
-            {/* --- STEP 2: REGISTER --- */}
+            {/* --- STEP 2: CREATE PROFILE --- */}
             {step === 'register' && (
                 <div className="min-h-screen flex flex-col bg-gray-50/50">
-                    {/* Header */}
-                    <div className="px-6 pt-12 pb-6">
-                        <h1 className="text-2xl font-bold text-slate-900 mb-2">Individual Profile</h1>
-                        <p className="text-sm text-gray-500">Tell us more about the person using this kit.</p>
+                    {/* Header with Back and Cancel */}
+                    <div className="px-6 py-4 flex items-center justify-between">
+                        <button onClick={handleBack} className="w-10 h-10 -ml-2 rounded-full flex items-center justify-center hover:bg-gray-100 transition-colors bg-white shadow-sm border border-gray-100">
+                            <ArrowLeft size={24} className="text-slate-800" />
+                        </button>
+                        <div className="text-center">
+                            <span className="text-[10px] text-teal-600 font-bold uppercase tracking-widest">Step 2 of 2</span>
+                            <h1 className="text-lg font-bold text-slate-900">Create Profile</h1>
+                        </div>
+                        <button onClick={onClose} className="w-10 h-10 -mr-2 rounded-full flex items-center justify-center hover:bg-gray-100 transition-colors">
+                            <X size={20} className="text-gray-400" />
+                        </button>
+                    </div>
 
-                        {/* Kit ID Badge */}
+                    {/* Kit ID Badge */}
+                    <div className="px-6 pb-4">
                         {kitId && (
-                            <div className="inline-flex items-center space-x-2 bg-teal-50 text-teal-600 px-3 py-1.5 rounded-lg mt-3">
+                            <div className="inline-flex items-center space-x-2 bg-teal-50 text-teal-600 px-3 py-1.5 rounded-lg">
                                 <Zap size={14} className="fill-teal-500" />
-                                <span className="text-xs font-bold tracking-wide">{kitId}</span>
+                                <span className="text-xs font-bold tracking-wide">Kit: {kitId}</span>
                             </div>
                         )}
 
                         {/* Stepper */}
-                        <div className="flex space-x-2 mt-6">
+                        <div className="flex space-x-2 mt-4">
                             <div className="h-1.5 flex-1 bg-teal-500 rounded-full"></div>
                             <div className="h-1.5 flex-1 bg-teal-500 rounded-full"></div>
                             <div className="h-1.5 flex-1 bg-gray-200 rounded-full"></div>
                         </div>
                         <div className="flex justify-between text-[10px] font-bold text-gray-400 mt-2 uppercase tracking-wider">
-                            <span className="text-teal-600">Scan</span>
-                            <span className="text-teal-600 text-center">Register</span>
-                            <span className="text-right">Thank You</span>
+                            <span className="text-teal-600">Kit</span>
+                            <span className="text-teal-600 text-center">Profile</span>
+                            <span className="text-right">Done</span>
                         </div>
                     </div>
 
-                    <div className="flex-1 px-6 space-y-6 pb-24 overflow-y-auto">
+                    <div className="flex-1 px-6 space-y-5 pb-32 overflow-y-auto">
 
                         {/* Photo Upload */}
-                        <div className="flex flex-col items-center justify-center py-4">
-                            <div className="w-32 h-32 rounded-full bg-white border-2 border-dashed border-teal-200 flex items-center justify-center relative shadow-sm cursor-pointer hover:bg-teal-50 transition-colors group">
-                                <User size={48} className="text-teal-100 group-hover:text-teal-200" />
-                                <div className="absolute bottom-0 right-0 w-10 h-10 bg-teal-500 rounded-full flex items-center justify-center border-4 border-white shadow-sm">
-                                    <Camera size={16} className="text-white" />
+                        <div className="flex flex-col items-center justify-center py-2">
+                            <div className="w-28 h-28 rounded-full bg-white border-2 border-dashed border-teal-200 flex items-center justify-center relative shadow-sm cursor-pointer hover:bg-teal-50 transition-colors group">
+                                <User size={40} className="text-teal-100 group-hover:text-teal-200" />
+                                <div className="absolute bottom-0 right-0 w-8 h-8 bg-teal-500 rounded-full flex items-center justify-center border-4 border-white shadow-sm">
+                                    <Camera size={14} className="text-white" />
                                 </div>
                             </div>
-                            <span className="mt-3 text-[10px] font-bold text-gray-400 uppercase tracking-widest">Add Photo</span>
+                            <span className="mt-2 text-[10px] font-bold text-gray-400 uppercase tracking-widest">Add Photo</span>
                         </div>
 
                         {/* Name */}
                         <div>
-                            <label className="text-xs font-bold text-slate-700 mb-2 block">Name</label>
+                            <label className="text-xs font-bold text-slate-700 mb-2 block">Name *</label>
                             <input
                                 type="text"
-                                className="w-full bg-slate-50 border-none rounded-2xl px-5 py-4 text-sm focus:ring-2 focus:ring-teal-500 transition-all font-medium"
+                                className="w-full bg-white border border-gray-100 rounded-2xl px-5 py-4 text-sm focus:ring-2 focus:ring-teal-500 transition-all font-medium shadow-sm"
                                 placeholder="Enter name"
                                 value={profileName}
                                 onChange={(e) => setProfileName(e.target.value)}
@@ -316,19 +342,19 @@ export const LinkKitFlow: React.FC<LinkKitFlowProps> = ({ onClose, onComplete })
                             <div className="grid grid-cols-3 gap-3">
                                 <button
                                     onClick={() => setGender('Male')}
-                                    className={`py-3 rounded-2xl text-sm font-bold transition-all ${gender === 'Male' ? 'bg-teal-600 text-white shadow-md shadow-teal-200' : 'bg-gray-100 text-gray-500 hover:bg-gray-200'}`}
+                                    className={`py-3 rounded-2xl text-sm font-bold transition-all ${gender === 'Male' ? 'bg-teal-600 text-white shadow-md shadow-teal-200' : 'bg-white border border-gray-100 text-gray-500 hover:bg-gray-50'}`}
                                 >
                                     Male
                                 </button>
                                 <button
                                     onClick={() => setGender('Female')}
-                                    className={`py-3 rounded-2xl text-sm font-bold transition-all ${gender === 'Female' ? 'bg-teal-600 text-white shadow-md shadow-teal-200' : 'bg-gray-100 text-gray-500 hover:bg-gray-200'}`}
+                                    className={`py-3 rounded-2xl text-sm font-bold transition-all ${gender === 'Female' ? 'bg-teal-600 text-white shadow-md shadow-teal-200' : 'bg-white border border-gray-100 text-gray-500 hover:bg-gray-50'}`}
                                 >
                                     Female
                                 </button>
                                 <button
                                     onClick={() => setGender('Other')}
-                                    className={`py-3 rounded-2xl text-sm font-bold transition-all ${gender === 'Other' ? 'bg-teal-600 text-white shadow-md shadow-teal-200' : 'bg-gray-100 text-gray-500 hover:bg-gray-200'}`}
+                                    className={`py-3 rounded-2xl text-sm font-bold transition-all ${gender === 'Other' ? 'bg-teal-600 text-white shadow-md shadow-teal-200' : 'bg-white border border-gray-100 text-gray-500 hover:bg-gray-50'}`}
                                 >
                                     Other
                                 </button>
@@ -369,22 +395,33 @@ export const LinkKitFlow: React.FC<LinkKitFlowProps> = ({ onClose, onComplete })
                         <div className="bg-blue-50/50 border border-blue-100 rounded-2xl p-4 flex items-start space-x-3">
                             <Info size={18} className="text-blue-500 shrink-0 mt-0.5" />
                             <p className="text-xs text-blue-800/70 leading-relaxed">
-                                These physical details help our genetic algorithms provide more accurate metabolic and lifestyle insights for the owner.
+                                These physical details help our genetic algorithms provide more accurate metabolic and lifestyle insights.
                             </p>
                         </div>
+                    </div>
 
-                        <button
-                            onClick={handleRegisterSubmit}
-                            disabled={loading}
-                            className="w-full bg-teal-600 hover:bg-teal-700 text-white font-bold py-4 rounded-2xl shadow-lg shadow-teal-200 transition-all active:scale-[0.98] flex items-center justify-center space-x-2 mt-4 disabled:opacity-50"
-                        >
-                            {loading ? <Loader2 className="animate-spin" /> : (
-                                <>
-                                    <span>Link Kit & Save Profile</span>
-                                    <ArrowLeft size={18} className="rotate-180" />
-                                </>
-                            )}
-                        </button>
+                    {/* Fixed Bottom Buttons */}
+                    <div className="fixed bottom-0 left-0 right-0 p-6 bg-gradient-to-t from-white via-white to-transparent">
+                        <div className="flex space-x-3">
+                            <button
+                                onClick={onClose}
+                                className="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-600 font-bold py-4 rounded-2xl transition-all"
+                            >
+                                Cancel
+                            </button>
+                            <button
+                                onClick={handleFinalSubmit}
+                                disabled={loading || !profileName.trim()}
+                                className="flex-[2] bg-teal-600 hover:bg-teal-700 disabled:bg-gray-200 disabled:text-gray-400 text-white font-bold py-4 rounded-2xl shadow-lg shadow-teal-200 transition-all flex items-center justify-center space-x-2"
+                            >
+                                {loading ? <Loader2 className="animate-spin" /> : (
+                                    <>
+                                        <span>Confirm & Save</span>
+                                        <Check size={18} />
+                                    </>
+                                )}
+                            </button>
+                        </div>
                     </div>
                 </div>
             )}
@@ -399,11 +436,12 @@ export const LinkKitFlow: React.FC<LinkKitFlowProps> = ({ onClose, onComplete })
 
                     {/* Header */}
                     <div className="px-6 py-4 flex justify-between items-center relative z-10">
+                        <div className="w-10"></div>
+                        <div className="text-center">
+                            <span className="text-[10px] text-teal-600 font-bold uppercase tracking-widest">Complete</span>
+                        </div>
                         <button onClick={onClose} className="p-2 hover:bg-black/5 rounded-full transition-colors">
                             <X size={24} className="text-slate-800" />
-                        </button>
-                        <button className="p-2 hover:bg-black/5 rounded-full transition-colors">
-                            <Share2 size={24} className="text-slate-800" />
                         </button>
                     </div>
 
@@ -440,7 +478,7 @@ export const LinkKitFlow: React.FC<LinkKitFlowProps> = ({ onClose, onComplete })
 
                         <h1 className="text-4xl font-black text-teal-400 tracking-tight mb-4 drop-shadow-sm">Success!</h1>
                         <p className="text-slate-500 leading-relaxed max-w-xs mx-auto mb-10">
-                            Your DNA kit has been successfully linked to your profile.
+                            Your DNA kit and profile have been successfully created.
                         </p>
 
                         {/* Profile Card */}
@@ -488,7 +526,7 @@ export const LinkKitFlow: React.FC<LinkKitFlowProps> = ({ onClose, onComplete })
                             onClick={handleComplete}
                             className="w-full bg-teal-400 hover:bg-teal-500 text-white font-bold py-4 rounded-2xl shadow-xl shadow-teal-200 transition-all active:scale-[0.98] flex items-center justify-center space-x-2"
                         >
-                            <span>View Tracking Status</span>
+                            <span>Go to Dashboard</span>
                             <ArrowLeft size={18} className="rotate-180" />
                         </button>
                     </div>
