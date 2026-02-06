@@ -411,7 +411,7 @@ export const LinkKitFlow: React.FC<LinkKitFlowProps> = ({ onClose, onComplete })
                             </button>
                             <button
                                 onClick={handleFinalSubmit}
-                                disabled={loading || !profileName.trim()}
+                                disabled={loading}
                                 className="flex-[2] bg-teal-600 hover:bg-teal-700 disabled:bg-gray-200 disabled:text-gray-400 text-white font-bold py-4 rounded-2xl shadow-lg shadow-teal-200 transition-all flex items-center justify-center space-x-2"
                             >
                                 {loading ? <Loader2 className="animate-spin" /> : (
