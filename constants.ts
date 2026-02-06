@@ -1,12 +1,12 @@
 import React from 'react';
 import { Trait, TraitLevel, ChartDataPoint, UserProfile } from './types';
-import { 
-  Music, 
-  Brain, 
-  Database, 
-  Palette, 
-  Timer, 
-  Zap, 
+import {
+  Music,
+  Brain,
+  Database,
+  Palette,
+  Timer,
+  Zap,
   Activity,
   Leaf,
   Dna,
@@ -112,23 +112,23 @@ export const TRAIT_DETAILS: any = {
   'Intelligence': {
     summary: 'ศักยภาพด้านสติปัญญาของลูกโดดเด่นมาก โดยเฉพาะด้านการประมวลผลข้อมูลและการแก้ปัญหาที่รวดเร็ว',
     subTraits: [
-      { 
-        name: 'Cognitive Ability', 
-        label: 'INFORMATION PROCESSING & PROBLEM SOLVING', 
-        level: 'GIFTED', 
-        icon: 'graduation' 
+      {
+        name: 'Cognitive Ability',
+        label: 'INFORMATION PROCESSING & PROBLEM SOLVING',
+        level: 'GIFTED',
+        icon: 'graduation'
       },
-      { 
-        name: 'Insight Ability', 
-        label: 'STRATEGIC THINKING', 
-        level: 'GIFTED', 
-        icon: 'lightbulb' 
+      {
+        name: 'Insight Ability',
+        label: 'STRATEGIC THINKING',
+        level: 'GIFTED',
+        icon: 'lightbulb'
       },
-      { 
-        name: 'Education Level', 
-        label: 'LEARNING CAPACITY', 
-        level: 'GIFTED', 
-        icon: 'award' 
+      {
+        name: 'Education Level',
+        label: 'LEARNING CAPACITY',
+        level: 'GIFTED',
+        icon: 'award'
       }
     ],
     celebrity: {
@@ -147,23 +147,23 @@ export const TRAIT_DETAILS: any = {
   'Sporting Ability': {
     summary: 'โครงสร้างทางพันธุกรรมของคุณบ่งบอกถึงความได้เปรียบตามธรรมชาติในด้านกีฬา โดยเฉพาะอย่างยิ่งในกิจกรรมที่ต้องใช้พละกำลัง การระเบิดพลัง และความว่องไว',
     subTraits: [
-      { 
-        name: 'Explosive Power', 
-        label: 'FAST-TWITCH MUSCLES', 
-        level: 'GIFTED', 
-        icon: 'zap' 
+      {
+        name: 'Explosive Power',
+        label: 'FAST-TWITCH MUSCLES',
+        level: 'GIFTED',
+        icon: 'zap'
       },
-      { 
-        name: 'Agility & Speed', 
-        label: 'MOTOR COORDINATION', 
-        level: 'EXCELLENT', 
-        icon: 'activity' 
+      {
+        name: 'Agility & Speed',
+        label: 'MOTOR COORDINATION',
+        level: 'EXCELLENT',
+        icon: 'activity'
       },
-      { 
-        name: 'Strength', 
-        label: 'MUSCLE COMPOSITION', 
-        level: 'STRONG', 
-        icon: 'dumbbell' 
+      {
+        name: 'Strength',
+        label: 'MUSCLE COMPOSITION',
+        level: 'STRONG',
+        icon: 'dumbbell'
       }
     ],
     celebrity: {
@@ -188,7 +188,7 @@ export const SUB_TRAIT_DETAILS: any = {
     subtitle: 'THE STRATEGIC THINKER',
     level: 'Gifted',
     percentile: 'TOP 5% PERCENTILE',
-    description: 'This trait influences how quickly the brain processes new information and adapts to complex problem-solving scenarios. As a Strategic Thinker, your child likely shows a natural aptitude for connecting disparate ideas and excels in environments requiring abstract reasoning.',
+    description: 'This trait influences how quickly the brain processes new information and adapts to complex problem-solving scenarios. As a Strategic Thinker, the individual likely shows a natural aptitude for connecting disparate ideas and excels in environments requiring abstract reasoning.',
     scientificInsight: 'The biological mechanism behind this trait is heavily influenced by the BDNF gene. This gene produces a protein that supports the survival of existing neurons and encourages the growth of new ones through a process called neuroplasticity. Enhanced levels of this protein improve synaptic signaling, allowing for faster neural transmission and more efficient pattern recognition in the prefrontal cortex.',
     genetics: [
       { gene: 'BDNF', snp: 'rs6265', genotype: 'GG', status: 'optimal' },
@@ -250,8 +250,8 @@ export const SUB_TRAIT_DETAILS: any = {
     description: 'This trait indicates a high proportion of fast-twitch muscle fibers (Type II), which are designed for short, high-intensity bursts of energy.',
     scientificInsight: 'The ACTN3 gene encodes alpha-actinin-3, a protein found only in fast-twitch muscle fibers. The "R" allele is associated with elite sprint and power performance.',
     genetics: [
-        { gene: 'ACTN3', snp: 'rs1815739', genotype: 'RR', status: 'optimal' },
-        { gene: 'ACE', snp: 'rs4646994', genotype: 'DD', status: 'mixed' }
+      { gene: 'ACTN3', snp: 'rs1815739', genotype: 'RR', status: 'optimal' },
+      { gene: 'ACE', snp: 'rs4646994', genotype: 'DD', status: 'mixed' }
     ],
     actionPlan: [],
     references: []
@@ -262,54 +262,54 @@ export const SUB_TRAIT_DETAILS: any = {
 export const ARTICLES: any = {
   '1': {
     id: '1',
-    title: "Nurturing your child's musical ear",
-    subtitle: "Scientific research has shown that genetic predispositions can significantly influence how children process pitch and rhythm.",
+    title: "Nurturing the musical ear",
+    subtitle: "Scientific research has shown that genetic predispositions can significantly influence how individuals process pitch and rhythm.",
     tag: "MUSIC",
     readTime: "5 mins read",
     author: {
-        name: "Dr. Sarah Jenkins",
-        role: "Genetics Specialist",
-        avatar: "https://images.unsplash.com/photo-1559839734-2b71ea197ec2?q=80&w=200&auto=format&fit=crop"
+      name: "Dr. Sarah Jenkins",
+      role: "Genetics Specialist",
+      avatar: "https://images.unsplash.com/photo-1559839734-2b71ea197ec2?q=80&w=200&auto=format&fit=crop"
     },
-    heroImage: "https://img.freepik.com/free-vector/little-boy-playing-xylophone_1308-161671.jpg?t=st=1734538000~exp=1734541600~hmac=000000", 
+    heroImage: "https://img.freepik.com/free-vector/little-boy-playing-xylophone_1308-161671.jpg?t=st=1734538000~exp=1734541600~hmac=000000",
     // If the above external image doesn't load, use a placeholder or the provided one in component
     content: [
-        {
-            type: 'paragraph',
-            text: "Scientific research has shown that genetic predispositions can significantly influence how children process pitch and rhythm. While environment is key, understanding your child's innate musical blueprint allows for a more tailored development approach."
-        },
-        {
-            type: 'heading',
-            text: "The Science of Rhythm"
-        },
-        {
-            type: 'paragraph',
-            text: "The AVPR1A gene, often linked to social bonding, also plays a crucial role in musical memory and rhythmic perception. Children with specific variants may naturally gravitate towards percussive patterns or find melodic recognition more intuitive."
-        },
-        {
-            type: 'list',
-            items: [
-                "Early exposure to diverse scales enhances neuroplasticity.",
-                "Rhythm games strengthen executive function."
-            ]
-        }
+      {
+        type: 'paragraph',
+        text: "Scientific research has shown that genetic predispositions can significantly influence how individuals process pitch and rhythm. While environment is key, understanding the innate musical blueprint allows for a more tailored development approach."
+      },
+      {
+        type: 'heading',
+        text: "The Science of Rhythm"
+      },
+      {
+        type: 'paragraph',
+        text: "The AVPR1A gene, often linked to social bonding, also plays a crucial role in musical memory and rhythmic perception. Individuals with specific variants may naturally gravitate towards percussive patterns or find melodic recognition more intuitive."
+      },
+      {
+        type: 'list',
+        items: [
+          "Early exposure to diverse scales enhances neuroplasticity.",
+          "Rhythm games strengthen executive function."
+        ]
+      }
     ],
     mascotInsight: "Try humming a simple tune and let your little one finish the melody. This boosts 'tonal prediction'—a key indicator of early musical potential!",
     activities: [
-        { id: 1, text: "Listen to classical music (15m)", checked: true },
-        { id: 2, text: "Clap to a basic 4/4 beat", checked: false },
-        { id: 3, text: "Identify 3 animal instrument sounds", checked: false }
+      { id: 1, text: "Listen to classical music (15m)", checked: true },
+      { id: 2, text: "Clap to a basic 4/4 beat", checked: false },
+      { id: 3, text: "Identify 3 animal instrument sounds", checked: false }
     ],
     related: [
-       { id: 101, title: "Visual Arts DNA", tag: "GENETICS", image: "https://images.unsplash.com/photo-1579783902614-a3fb392796a5?q=80&w=300&auto=format&fit=crop" },
-       { id: 102, title: "The EQ Connection", tag: "SOCIAL", image: "https://images.unsplash.com/photo-1511632765486-a01980e01a18?q=80&w=300&auto=format&fit=crop" }
+      { id: 101, title: "Visual Arts DNA", tag: "GENETICS", image: "https://images.unsplash.com/photo-1579783902614-a3fb392796a5?q=80&w=300&auto=format&fit=crop" },
+      { id: 102, title: "The EQ Connection", tag: "SOCIAL", image: "https://images.unsplash.com/photo-1511632765486-a01980e01a18?q=80&w=300&auto=format&fit=crop" }
     ]
   }
 };
 
 export const getIcon = (name: string, size: number = 24, className: string = '') => {
   const props = { size, className };
-  switch(name) {
+  switch (name) {
     case 'music': return React.createElement(Music, props);
     case 'brain': return React.createElement(Brain, props);
     case 'database': return React.createElement(Database, props);
