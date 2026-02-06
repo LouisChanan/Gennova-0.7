@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
-import { ArrowLeft, Zap, Keyboard, Calendar, Info, X, Share2, Check, ChevronRight, Camera, User, Ruler, Weight, Loader2 } from 'lucide-react';
+import { ArrowLeft, Zap, Keyboard, Calendar, Info, X, Share2, Check, ChevronRight, Camera, User, Loader2 } from 'lucide-react';
 import { useAuth } from './AuthContext';
 import { supabase } from '../services/supabase';
+import { Scanner } from '@yudiel/react-qr-scanner';
 
 interface LinkKitFlowProps {
     onClose: () => void;
@@ -12,15 +13,29 @@ export const LinkKitFlow: React.FC<LinkKitFlowProps> = ({ onClose, onComplete })
     const { user } = useAuth();
     const [step, setStep] = useState<'scan' | 'register' | 'success'>('scan');
     const [loading, setLoading] = useState(false);
+    const [scanMode, setScanMode] = useState<'camera' | 'manual'>('camera');
+    const [cameraError, setCameraError] = useState<string | null>(null);
 
     // Form State
     const [profileName, setProfileName] = useState('');
     const [dob, setDob] = useState('');
-    const [kitId, setKitId] = useState(`GK-${Math.floor(1000 + Math.random() * 9000)}`);
+    const [kitId, setKitId] = useState('');
+    const [gender, setGender] = useState<'Male' | 'Female' | 'Other' | null>(null);
+    const [height, setHeight] = useState('');
+    const [weight, setWeight] = useState('');
 
-    const handleScanSimulate = () => {
-        // Simulate a successful scan after a short delay or interaction
-        setTimeout(() => setStep('register'), 500);
+    const handleScan = (result: { rawValue: string }[]) => {
+        if (result && result.length > 0) {
+            const scannedValue = result[0].rawValue;
+            setKitId(scannedValue);
+            setStep('register');
+        }
+    };
+
+    const handleManualSubmit = () => {
+        if (kitId.trim()) {
+            setStep('register');
+        }
     };
 
     const handleRegisterSubmit = async () => {
@@ -28,13 +43,16 @@ export const LinkKitFlow: React.FC<LinkKitFlowProps> = ({ onClose, onComplete })
         setLoading(true);
 
         try {
-            // 1. Insert Profile
+            // 1. Insert Profile with all fields
             const { data: profileData, error: profileError } = await supabase
                 .from('profiles')
                 .insert({
                     user_id: user.id,
                     name: profileName || 'Unnamed Profile',
-                    dob: dob || null
+                    dob: dob || null,
+                    gender: gender || null,
+                    height: height ? parseFloat(height) : null,
+                    weight: weight ? parseFloat(weight) : null
                 })
                 .select()
                 .single();
@@ -45,13 +63,13 @@ export const LinkKitFlow: React.FC<LinkKitFlowProps> = ({ onClose, onComplete })
             const { error: kitError } = await supabase
                 .from('dna_test_kits')
                 .insert({
-                    kit_id: kitId,
+                    kit_id: kitId || `GK-${Math.floor(1000 + Math.random() * 9000)}`,
                     profile_id: profileData.id,
                     status: 'activated',
                     activated_at: new Date().toISOString()
                 });
 
-            // Timestamp already set in insert
+            if (kitError) throw kitError;
 
             setStep('success');
         } catch (err) {
@@ -131,67 +149,90 @@ export const LinkKitFlow: React.FC<LinkKitFlowProps> = ({ onClose, onComplete })
                     </div>
 
                     <div className="flex-1 flex flex-col items-center px-6 pt-4">
-                        <h2 className="text-2xl font-bold text-slate-900 mb-1">Scan Barcode</h2>
-                        <p className="text-xs text-gray-400 font-bold tracking-widest uppercase mb-8">Align code within frame</p>
+                        <h2 className="text-2xl font-bold text-slate-900 mb-1">
+                            {scanMode === 'camera' ? 'Scan QR Code' : 'Enter Kit Serial'}
+                        </h2>
+                        <p className="text-xs text-gray-400 font-bold tracking-widest uppercase mb-6">
+                            {scanMode === 'camera' ? 'Point camera at kit QR code' : 'Type the code from your kit box'}
+                        </p>
 
-                        {/* Camera Viewfinder */}
-                        <div
-                            onClick={handleScanSimulate}
-                            className="w-full max-w-sm aspect-square bg-slate-900 rounded-[32px] relative overflow-hidden shadow-2xl cursor-pointer group"
-                        >
-                            {/* Fake Image Feed */}
-                            <img
-                                src="https://images.unsplash.com/photo-1579154204601-01588f351e67?q=80&w=800&auto=format&fit=crop"
-                                className="absolute inset-0 w-full h-full object-cover opacity-60 mix-blend-overlay"
-                                alt="Camera Feed"
-                            />
-                            <div className="absolute inset-0 bg-gradient-to-b from-black/20 to-black/60"></div>
-
-                            {/* Grid Lines with Breathing Animation */}
-                            <div className="absolute inset-0"
-                                style={{
-                                    backgroundImage: 'linear-gradient(rgba(20, 184, 166, 0.2) 1px, transparent 1px), linear-gradient(90deg, rgba(20, 184, 166, 0.2) 1px, transparent 1px)',
-                                    backgroundSize: '40px 40px',
-                                    animation: 'breathe 5s ease-in-out infinite'
-                                }}>
-                            </div>
-
-                            {/* Corner Markers with Pulsating Animation */}
-                            <div className="absolute top-6 left-6 w-12 h-12 border-l-4 border-t-4 border-teal-400 rounded-tl-xl" style={{ animation: 'pulse-glow 2s infinite' }}></div>
-                            <div className="absolute top-6 right-6 w-12 h-12 border-r-4 border-t-4 border-teal-400 rounded-tr-xl" style={{ animation: 'pulse-glow 2s infinite', animationDelay: '0.1s' }}></div>
-                            <div className="absolute bottom-6 left-6 w-12 h-12 border-l-4 border-b-4 border-teal-400 rounded-bl-xl" style={{ animation: 'pulse-glow 2s infinite', animationDelay: '0.2s' }}></div>
-                            <div className="absolute bottom-6 right-6 w-12 h-12 border-r-4 border-b-4 border-teal-400 rounded-br-xl" style={{ animation: 'pulse-glow 2s infinite', animationDelay: '0.3s' }}></div>
-
-                            {/* Scan Line Animation */}
-                            <div className="absolute top-0 left-0 right-0 h-0.5 bg-teal-400 shadow-[0_0_20px_rgba(45,212,191,0.8)] animate-[scan_3s_ease-in-out_infinite]"></div>
-
-                            {/* Flash Button */}
-                            <button className="absolute bottom-6 left-1/2 -translate-x-1/2 bg-black/40 backdrop-blur-md border border-white/20 text-white px-4 py-2 rounded-full flex items-center space-x-2 text-xs font-bold uppercase tracking-wider hover:bg-black/60 transition">
-                                <Zap size={14} className="fill-white" />
-                                <span>Flash</span>
+                        {/* Mode Toggle */}
+                        <div className="flex bg-gray-100 rounded-2xl p-1 mb-6">
+                            <button
+                                onClick={() => setScanMode('camera')}
+                                className={`px-4 py-2 rounded-xl text-sm font-bold transition-all ${scanMode === 'camera' ? 'bg-white shadow-sm text-teal-600' : 'text-gray-500'}`}
+                            >
+                                <Camera size={16} className="inline mr-2" />
+                                Camera
+                            </button>
+                            <button
+                                onClick={() => setScanMode('manual')}
+                                className={`px-4 py-2 rounded-xl text-sm font-bold transition-all ${scanMode === 'manual' ? 'bg-white shadow-sm text-teal-600' : 'text-gray-500'}`}
+                            >
+                                <Keyboard size={16} className="inline mr-2" />
+                                Manual
                             </button>
                         </div>
+
+                        {scanMode === 'camera' ? (
+                            /* Camera Viewfinder */
+                            <div className="w-full max-w-sm aspect-square bg-slate-900 rounded-[32px] relative overflow-hidden shadow-2xl">
+                                {cameraError ? (
+                                    <div className="absolute inset-0 flex flex-col items-center justify-center text-white p-6 text-center">
+                                        <Camera size={48} className="text-gray-500 mb-4" />
+                                        <p className="text-sm text-gray-400 mb-4">{cameraError}</p>
+                                        <button
+                                            onClick={() => setScanMode('manual')}
+                                            className="bg-teal-500 text-white px-4 py-2 rounded-xl text-sm font-bold"
+                                        >
+                                            Use Manual Entry
+                                        </button>
+                                    </div>
+                                ) : (
+                                    <Scanner
+                                        onScan={handleScan}
+                                        onError={(error) => setCameraError(error?.message || 'Camera access denied')}
+                                        styles={{
+                                            container: { width: '100%', height: '100%' },
+                                            video: { objectFit: 'cover' }
+                                        }}
+                                        components={{
+                                            finder: false
+                                        }}
+                                    />
+                                )}
+
+                                {/* Corner Markers */}
+                                <div className="absolute top-6 left-6 w-12 h-12 border-l-4 border-t-4 border-teal-400 rounded-tl-xl pointer-events-none" style={{ animation: 'pulse-glow 2s infinite' }}></div>
+                                <div className="absolute top-6 right-6 w-12 h-12 border-r-4 border-t-4 border-teal-400 rounded-tr-xl pointer-events-none" style={{ animation: 'pulse-glow 2s infinite', animationDelay: '0.1s' }}></div>
+                                <div className="absolute bottom-6 left-6 w-12 h-12 border-l-4 border-b-4 border-teal-400 rounded-bl-xl pointer-events-none" style={{ animation: 'pulse-glow 2s infinite', animationDelay: '0.2s' }}></div>
+                                <div className="absolute bottom-6 right-6 w-12 h-12 border-r-4 border-b-4 border-teal-400 rounded-br-xl pointer-events-none" style={{ animation: 'pulse-glow 2s infinite', animationDelay: '0.3s' }}></div>
+                            </div>
+                        ) : (
+                            /* Manual Entry */
+                            <div className="w-full max-w-sm space-y-4">
+                                <input
+                                    type="text"
+                                    value={kitId}
+                                    onChange={(e) => setKitId(e.target.value.toUpperCase())}
+                                    placeholder="GK-XXXX-XXXX"
+                                    className="w-full bg-gray-50 border-2 border-gray-200 focus:border-teal-400 rounded-2xl px-6 py-5 text-center text-xl font-mono font-bold tracking-widest outline-none transition-colors"
+                                />
+                                <button
+                                    onClick={handleManualSubmit}
+                                    disabled={!kitId.trim()}
+                                    className="w-full bg-teal-500 hover:bg-teal-600 disabled:bg-gray-200 disabled:text-gray-400 text-white font-bold py-4 rounded-2xl shadow-lg shadow-teal-200 transition-all flex items-center justify-center space-x-2"
+                                >
+                                    <span>Continue</span>
+                                    <ChevronRight size={18} />
+                                </button>
+                            </div>
+                        )}
                     </div>
 
-                    {/* Footer - Manual Entry */}
+                    {/* Footer */}
                     <div className="p-6 pb-12">
-                        <button
-                            onClick={() => setStep('register')}
-                            className="w-full bg-white border border-gray-100 shadow-lg shadow-gray-100 rounded-[24px] p-4 flex items-center justify-between group hover:border-teal-100 transition-all"
-                        >
-                            <div className="flex items-center space-x-4">
-                                <div className="w-12 h-12 rounded-2xl bg-teal-50 text-teal-500 flex items-center justify-center group-hover:bg-teal-100 transition-colors">
-                                    <Keyboard size={24} />
-                                </div>
-                                <div className="text-left">
-                                    <h3 className="font-bold text-slate-900">Manual Entry</h3>
-                                    <p className="text-[10px] text-gray-400 font-bold uppercase tracking-wider">CODE-XXXX-XXXX</p>
-                                </div>
-                            </div>
-                            <ChevronRight size={20} className="text-gray-300 group-hover:text-teal-500 transition-colors" />
-                        </button>
-
-                        <div className="text-center mt-8 flex items-center justify-center text-[10px] font-bold text-gray-400 uppercase tracking-widest space-x-2">
+                        <div className="text-center flex items-center justify-center text-[10px] font-bold text-gray-400 uppercase tracking-widest space-x-2">
                             <div className="w-4 h-4 rounded-full bg-teal-100 flex items-center justify-center">
                                 <Check size={10} className="text-teal-600" strokeWidth={4} />
                             </div>
@@ -208,6 +249,14 @@ export const LinkKitFlow: React.FC<LinkKitFlowProps> = ({ onClose, onComplete })
                     <div className="px-6 pt-12 pb-6">
                         <h1 className="text-2xl font-bold text-slate-900 mb-2">Individual Profile</h1>
                         <p className="text-sm text-gray-500">Tell us more about the person using this kit.</p>
+
+                        {/* Kit ID Badge */}
+                        {kitId && (
+                            <div className="inline-flex items-center space-x-2 bg-teal-50 text-teal-600 px-3 py-1.5 rounded-lg mt-3">
+                                <Zap size={14} className="fill-teal-500" />
+                                <span className="text-xs font-bold tracking-wide">{kitId}</span>
+                            </div>
+                        )}
 
                         {/* Stepper */}
                         <div className="flex space-x-2 mt-6">
@@ -265,9 +314,24 @@ export const LinkKitFlow: React.FC<LinkKitFlowProps> = ({ onClose, onComplete })
                         <div>
                             <label className="text-xs font-bold text-slate-700 mb-2 block">Gender</label>
                             <div className="grid grid-cols-3 gap-3">
-                                <button className="bg-teal-600 text-white py-3 rounded-2xl text-sm font-bold shadow-md shadow-teal-200">Male</button>
-                                <button className="bg-gray-100 text-gray-500 py-3 rounded-2xl text-sm font-bold hover:bg-gray-200">Female</button>
-                                <button className="bg-gray-100 text-gray-500 py-3 rounded-2xl text-sm font-bold hover:bg-gray-200">Other</button>
+                                <button
+                                    onClick={() => setGender('Male')}
+                                    className={`py-3 rounded-2xl text-sm font-bold transition-all ${gender === 'Male' ? 'bg-teal-600 text-white shadow-md shadow-teal-200' : 'bg-gray-100 text-gray-500 hover:bg-gray-200'}`}
+                                >
+                                    Male
+                                </button>
+                                <button
+                                    onClick={() => setGender('Female')}
+                                    className={`py-3 rounded-2xl text-sm font-bold transition-all ${gender === 'Female' ? 'bg-teal-600 text-white shadow-md shadow-teal-200' : 'bg-gray-100 text-gray-500 hover:bg-gray-200'}`}
+                                >
+                                    Female
+                                </button>
+                                <button
+                                    onClick={() => setGender('Other')}
+                                    className={`py-3 rounded-2xl text-sm font-bold transition-all ${gender === 'Other' ? 'bg-teal-600 text-white shadow-md shadow-teal-200' : 'bg-gray-100 text-gray-500 hover:bg-gray-200'}`}
+                                >
+                                    Other
+                                </button>
                             </div>
                         </div>
 
@@ -276,14 +340,26 @@ export const LinkKitFlow: React.FC<LinkKitFlowProps> = ({ onClose, onComplete })
                             <div className="flex-1">
                                 <label className="text-xs font-bold text-slate-700 mb-2 block">Height</label>
                                 <div className="bg-white border border-gray-100 rounded-2xl p-4 flex justify-between items-center shadow-sm">
-                                    <span className="text-slate-900 font-bold">0</span>
+                                    <input
+                                        type="number"
+                                        value={height}
+                                        onChange={(e) => setHeight(e.target.value)}
+                                        placeholder="0"
+                                        className="w-full bg-transparent outline-none text-slate-900 font-bold text-sm"
+                                    />
                                     <span className="text-xs font-bold text-gray-400 uppercase">cm</span>
                                 </div>
                             </div>
                             <div className="flex-1">
                                 <label className="text-xs font-bold text-slate-700 mb-2 block">Weight</label>
                                 <div className="bg-white border border-gray-100 rounded-2xl p-4 flex justify-between items-center shadow-sm">
-                                    <span className="text-slate-900 font-bold">0</span>
+                                    <input
+                                        type="number"
+                                        value={weight}
+                                        onChange={(e) => setWeight(e.target.value)}
+                                        placeholder="0"
+                                        className="w-full bg-transparent outline-none text-slate-900 font-bold text-sm"
+                                    />
                                     <span className="text-xs font-bold text-gray-400 uppercase">kg</span>
                                 </div>
                             </div>
@@ -337,13 +413,11 @@ export const LinkKitFlow: React.FC<LinkKitFlowProps> = ({ onClose, onComplete })
                         <div className="relative mb-8">
                             <div className="w-48 h-48 rounded-full bg-teal-50 flex items-center justify-center relative">
                                 <div className="absolute top-0 right-0 bg-white p-3 rounded-full shadow-md animate-bounce delay-100">
-                                    {/* Confetti Icon Placeholder */}
                                     <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-teal-500">
                                         <path d="M12 2L15 8L21 9L17 14L18 20L12 17L6 20L7 14L3 9L9 8L12 2Z" fill="currentColor" className="opacity-20" />
                                         <path d="M12 2L15 8L21 9L17 14L18 20L12 17L6 20L7 14L3 9L9 8L12 2Z" />
                                     </svg>
                                 </div>
-                                {/* Big DNA Icon */}
                                 <svg width="80" height="80" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="text-teal-400">
                                     <path d="M2 15c6.667-6 13.333 0 20-6" />
                                     <path d="M9 22c1.798-1.998 2.518-3.995 2.807-5.993" />
@@ -358,7 +432,6 @@ export const LinkKitFlow: React.FC<LinkKitFlowProps> = ({ onClose, onComplete })
                                     <path d="M10 16l1.5 1.5" />
                                 </svg>
 
-                                {/* Confetti particles */}
                                 <div className="absolute top-10 left-10 w-2 h-2 bg-yellow-400 rounded-sm rotate-12"></div>
                                 <div className="absolute bottom-10 right-10 w-2 h-2 bg-pink-400 rounded-full"></div>
                                 <div className="absolute top-1/2 right-4 w-3 h-1 bg-blue-400 rounded-full rotate-45"></div>
@@ -373,9 +446,7 @@ export const LinkKitFlow: React.FC<LinkKitFlowProps> = ({ onClose, onComplete })
                         {/* Profile Card */}
                         <div className="w-full bg-white rounded-3xl p-3 flex items-center space-x-4 shadow-lg shadow-teal-50 border border-teal-50 mb-8">
                             <div className="w-16 h-16 rounded-2xl bg-gray-100 overflow-hidden shrink-0">
-                                {/* Placeholder Avatar */}
                                 <div className="w-full h-full bg-[#5D4037] flex items-center justify-center pt-2">
-                                    {/* Simple SVG Face */}
                                     <svg viewBox="0 0 100 100" className="w-full h-full">
                                         <circle cx="50" cy="40" r="25" fill="#8D6E63" />
                                         <path d="M20 90 Q50 60 80 90" fill="#8D6E63" />
